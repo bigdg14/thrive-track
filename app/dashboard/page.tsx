@@ -227,8 +227,8 @@ export default async function DashboardPage() {
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
         <div className="space-y-2">
-          <h2 className="text-3xl font-bold">Welcome back, {firstName}! 👋</h2>
-          <p className="text-muted-foreground">Ready to crush your fitness goals?</p>
+          <h1 className="text-4xl font-extrabold leading-tight">Welcome back, {firstName}! 👋</h1>
+          <p className="text-muted-foreground text-lg">Ready to crush your fitness goals?</p>
         </div>
 
         {/* Start Workout CTA */}
@@ -240,7 +240,7 @@ export default async function DashboardPage() {
                 <p className="text-muted-foreground">Track your sets, rest times, and smash those PRs!</p>
               </div>
               <Link href="/workouts/active">
-                <Button size="lg" className="gap-2 text-lg px-8 py-6">
+                <Button size="lg" variant="contrast" className="gap-2 text-lg px-8 py-6">
                   <Dumbbell className="w-5 h-5" />
                   Start Workout
                 </Button>
