@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { SessionProvider } from "@/components/providers/session-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import Navbar from "@/components/layout/Navbar"
+import { auth } from "@/lib/auth"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -26,11 +27,14 @@ export const viewport: Viewport = {
   themeColor: "#3b82f6",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const session = await auth()
+  const signedIn = Boolean(session?.user?.id)
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -43,7 +47,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <SessionProvider>
-            <Navbar />
+            {signedIn && (
+              <Navbar userName={session?.user?.name} userImage={session?.user?.image} />
+            )}
             {children}
             <Toaster />
           </SessionProvider>
