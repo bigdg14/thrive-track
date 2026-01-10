@@ -20,10 +20,8 @@ const updateMeasurementSchema = z.object({
 });
 
 // GET /api/measurements/[id] - Get a specific measurement
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 
@@ -53,10 +51,8 @@ export async function GET(
 }
 
 // PATCH /api/measurements/[id] - Update a measurement
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 
@@ -88,7 +84,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data", details: error.errors },
+        { error: "Invalid request data", details: error.issues },
         { status: 400 }
       );
     }
@@ -102,10 +98,8 @@ export async function PATCH(
 }
 
 // DELETE /api/measurements/[id] - Delete a measurement
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 

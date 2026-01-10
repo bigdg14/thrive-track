@@ -17,10 +17,8 @@ const updateNutritionLogSchema = z.object({
 });
 
 // DELETE /api/nutrition/logs/[id] - Delete a nutrition log
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 
@@ -55,10 +53,8 @@ export async function DELETE(
 }
 
 // PATCH /api/nutrition/logs/[id] - Update a nutrition log
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 
@@ -90,7 +86,7 @@ export async function PATCH(
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request data", details: error.errors },
+        { error: "Invalid request data", details: error.issues },
         { status: 400 }
       );
     }

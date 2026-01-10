@@ -19,7 +19,9 @@ import {
   Flame,
   Scale,
   Apple,
-  TrendingDown
+  TrendingDown,
+  Trophy,
+  Users
 } from "lucide-react"
 import { formatDistanceToNow, format, startOfDay, endOfDay } from "date-fns"
 
@@ -539,6 +541,18 @@ export default async function DashboardPage() {
                   Log Nutrition
                 </Button>
               </Link>
+              <Link href="/programs">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Programs
+                </Button>
+              </Link>
+              <Link href="/profile">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Trophy className="w-4 h-4" />
+                  My Profile
+                </Button>
+              </Link>
               <Link href="/workouts/history">
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <Calendar className="w-4 h-4" />
@@ -551,9 +565,27 @@ export default async function DashboardPage() {
                   Personal Records
                 </Button>
               </Link>
-              <Link href="/settings">
+              <Link href="/social/feed">
                 <Button variant="outline" className="w-full justify-start gap-2">
                   <Activity className="w-4 h-4" />
+                  Activity Feed
+                </Button>
+              </Link>
+              <Link href="/challenges">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Trophy className="w-4 h-4" />
+                  Challenges
+                </Button>
+              </Link>
+              <Link href="/social/friends">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Users className="w-4 h-4" />
+                  Friends
+                </Button>
+              </Link>
+              <Link href="/settings">
+                <Button variant="outline" className="w-full justify-start gap-2">
+                  <Target className="w-4 h-4" />
                   Settings
                 </Button>
               </Link>

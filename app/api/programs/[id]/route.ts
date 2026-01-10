@@ -3,10 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 // GET /api/programs/[id] - Get a specific program
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 
@@ -44,10 +42,8 @@ export async function GET(
 }
 
 // DELETE /api/programs/[id] - Delete a custom program
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth();
 

@@ -3,7 +3,14 @@ import { prisma } from "@/lib/db"
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
+    let searchParams: URLSearchParams
+    try {
+      searchParams = new URL(request.url).searchParams
+    } catch (e) {
+      // During prerender/build Next may pass a relative URL (e.g. "/api/exercises").
+      // Fallback to a dummy base so URL parsing works.
+      searchParams = new URL(request.url, "http://localhost").searchParams
+    }
     const search = searchParams.get("search")
     const muscleGroup = searchParams.get("muscleGroup")
     const equipment = searchParams.get("equipment")

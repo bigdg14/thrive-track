@@ -2,10 +2,8 @@ import { NextResponse } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/db"
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth()
 
@@ -45,10 +43,8 @@ export async function GET(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth()
 
@@ -83,10 +79,8 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, context: { params: any }) {
+  const { params } = context
   try {
     const session = await auth()
 
