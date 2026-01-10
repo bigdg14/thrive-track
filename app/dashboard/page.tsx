@@ -201,28 +201,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                <Dumbbell className="w-6 h-6 text-primary" />
-              </div>
-              <h1 className="text-xl font-bold">ThriveTrack</h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <Link href="/profile">
-                <Avatar className="h-10 w-10 cursor-pointer hover:ring-2 ring-primary transition-all">
-                  <AvatarImage src={data.user?.image || ""} />
-                  <AvatarFallback>{firstName[0]?.toUpperCase()}</AvatarFallback>
-                </Avatar>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Header removed — global Navbar provides logo and theme toggle */}
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
