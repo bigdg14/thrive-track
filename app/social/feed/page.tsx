@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,9 @@ export default function ActivityFeedPage() {
   const [posting, setPosting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
   const [me, setMe] = useState<{ name?: string | null; image?: string | null } | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [lastFailedPosts, setLastFailedPosts] = useState<Record<string, any>>({});
 
   useEffect(() => {
     fetchActivityFeed(feedType);
@@ -192,6 +196,34 @@ export default function ActivityFeedPage() {
                             onChange={(e) => setComposerText(e.target.value)}
                           />
 
+                          <div className="mt-2 flex items-center gap-2">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const f = e.target.files?.[0] ?? null;
+                                setAttachmentFile(f);
+                                if (f) {
+                                  const url = URL.createObjectURL(f);
+                                  setAttachmentPreview(url);
+                                  // also read as data URL for sending
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    setAttachmentPreview(reader.result as string);
+                                  };
+                                  reader.readAsDataURL(f);
+                                } else {
+                                  setAttachmentPreview(null);
+                                }
+                              }}
+                            />
+                            {attachmentPreview && (
+                              <div className="w-20 h-20 rounded overflow-hidden border border-border">
+                                <img src={attachmentPreview} alt="preview" className="w-full h-full object-cover" />
+                              </div>
+                            )}
+                          </div>
+
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center gap-2">
                               <select
@@ -231,30 +263,72 @@ export default function ActivityFeedPage() {
                                     description: composerText,
                                     metadata: {},
                                     visibility: composerVisibility,
+                                  } as any;
+
+                                  if (attachmentPreview) {
+                                    // include image data URL in metadata (prototype)
+                                    payload.metadata.image = attachmentPreview;
+                                  }
+
+                                  const postActivity = async (pl: any, tId: string) => {
+                                    try {
+                                      const res = await fetch(`/api/social/feed`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify(pl),
+                                      });
+                                      const data = await res.json();
+                                      if (data.activity) {
+                                        // replace temp with real entry
+                                        setActivities((prev) => [data.activity, ...prev.filter((a) => a.id !== tId)]);
+                                        toast.success("Posted", {
+                                          action: {
+                                            label: "Undo",
+                                            onClick: () => {
+                                              // optimistic local undo (no delete API)
+                                              setActivities((prev) => prev.filter((a) => a.id !== data.activity.id));
+                                            },
+                                          },
+                                        });
+                                        // clear stored failed if any
+                                        setLastFailedPosts((prev) => {
+                                          const next = { ...prev };
+                                          delete next[tId];
+                                          return next;
+                                        });
+                                      } else {
+                                        // failed - keep temp and store payload for retry
+                                        setLastFailedPosts((prev) => ({ ...prev, [tId]: pl }));
+                                        toast.error("Failed to post", {
+                                          action: {
+                                            label: "Retry",
+                                            onClick: () => retryPost(tId),
+                                          },
+                                        });
+                                      }
+                                    } catch (err) {
+                                      // keep temp and store payload for retry
+                                      setLastFailedPosts((prev) => ({ ...prev, [tId]: pl }));
+                                      toast.error("Network error while posting", {
+                                        action: { label: "Retry", onClick: () => retryPost(tId) },
+                                      });
+                                    }
+                                  };
+
+                                  const retryPost = async (tId: string) => {
+                                    const pl = lastFailedPosts[tId];
+                                    if (!pl) return;
+                                    await postActivity(pl, tId);
                                   };
 
                                   try {
-                                    const res = await fetch(`/api/social/feed`, {
-                                      method: "POST",
-                                      headers: { "Content-Type": "application/json" },
-                                      body: JSON.stringify(payload),
-                                    });
-                                    const data = await res.json();
-                                    if (data.activity) {
-                                      // replace temp with real entry
-                                      setActivities((prev) => [data.activity, ...prev.filter((a) => a.id !== tempId)]);
-                                    } else {
-                                      // failed - remove temp
-                                      setActivities((prev) => prev.filter((a) => a.id !== tempId));
-                                      console.error(data);
-                                    }
-                                  } catch (err) {
-                                    console.error("Failed to post activity", err);
-                                    setActivities((prev) => prev.filter((a) => a.id !== tempId));
+                                    await postActivity(payload, tempId);
                                   } finally {
                                     setPosting(false);
                                     setComposerText("");
                                     setShowComposer(false);
+                                    setAttachmentFile(null);
+                                    setAttachmentPreview(null);
                                   }
                                 }}
                                 disabled={posting}
