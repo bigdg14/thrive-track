@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { uploadImageDataUrl } from "@/lib/storage";
 
 // GET /api/social/feed - Get activity feed
 export async function GET(request: Request) {
@@ -79,11 +80,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // If metadata.image is a data URL, attempt to upload to S3 and replace with URL
+    let finalMetadata = metadata || {};
+    if (metadata?.image && typeof metadata.image === "string" && metadata.image.startsWith("data:")) {
+      const uploaded = await uploadImageDataUrl(metadata.image, "activity");
+      if (uploaded) {
+        finalMetadata = { ...(metadata || {}), imageUrl: uploaded };
+        delete finalMetadata.image;
+      } else {
+        // keep data URL as-is if upload failed
+        finalMetadata = { ...(metadata || {}) };
+      }
+    }
+
     const activity = await prisma.activityFeed.create({
       data: {
         userId: session.user.id,
         activityType,
-        content: { description, ...(metadata || {}) },
+        content: { description, ...(finalMetadata || {}) },
         visibility: visibility || "friends",
       },
       include: {
