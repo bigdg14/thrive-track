@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -73,20 +74,63 @@ export default function FriendsPage() {
 
   async function sendRequest() {
     if (!email) return;
+    const tempId = `temp-out-${Date.now()}`;
+    const tempOutgoing = {
+      id: tempId,
+      friend: { id: tempId, name: email, email },
+    };
+    // optimistic UI
+    setOutgoing((prev) => [tempOutgoing, ...prev]);
+    setLoading(true);
+    const payload = { email };
+    try {
+      const res = await fetch(`/api/social/friends`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.friendship) {
+        toast.success("Friend request sent");
+        setEmail("");
+        await loadAll();
+      } else {
+        // rollback
+        setOutgoing((prev) => prev.filter((o: any) => o.id !== tempId));
+        toast.error("Failed to send friend request");
+        console.error(data);
+      }
+    } catch (err) {
+      setOutgoing((prev) => prev.filter((o: any) => o.id !== tempId));
+      toast.error("Network error while sending request");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function sendRequestToUserId(userId: string, display?: string) {
+    const tempId = `temp-out-${Date.now()}`;
+    const tempOutgoing = { id: tempId, friend: { id: userId, name: display || userId } };
+    setOutgoing((prev) => [tempOutgoing, ...prev]);
     setLoading(true);
     try {
       const res = await fetch(`/api/social/friends`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      }).then((r) => r.json());
-      if (res.friendship) {
-        setEmail("");
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      if (data.friendship) {
+        toast.success("Friend request sent");
         await loadAll();
       } else {
-        console.error(res);
+        setOutgoing((prev) => prev.filter((o: any) => o.id !== tempId));
+        toast.error("Failed to send friend request");
       }
     } catch (err) {
+      setOutgoing((prev) => prev.filter((o: any) => o.id !== tempId));
+      toast.error("Network error while sending request");
       console.error(err);
     } finally {
       setLoading(false);
