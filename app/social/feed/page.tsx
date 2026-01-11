@@ -31,6 +31,7 @@ export default function ActivityFeedPage() {
   const [composerText, setComposerText] = useState("");
   const [composerVisibility, setComposerVisibility] = useState<"friends" | "public">("friends");
   const [posting, setPosting] = useState(false);
+  const [showComposer, setShowComposer] = useState(false);
 
   useEffect(() => {
     fetchActivityFeed(feedType);
@@ -145,7 +146,15 @@ export default function ActivityFeedPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                    {/* Composer */}
+                {/* Composer toggle */}
+                <div className="mb-4">
+                  {!showComposer ? (
+                    <div className="flex justify-end">
+                      <Button variant="ghost" onClick={() => setShowComposer(true)}>
+                        Add new post
+                      </Button>
+                    </div>
+                  ) : (
                     <div className="mb-4">
                       <div className="flex gap-3">
                         <Avatar className="w-10 h-10 mt-1">
@@ -173,7 +182,10 @@ export default function ActivityFeedPage() {
                               </select>
                             </div>
 
-                            <div>
+                            <div className="flex items-center gap-2">
+                              <Button variant="outline" onClick={() => { setShowComposer(false); setComposerText(""); }} disabled={posting}>
+                                Cancel
+                              </Button>
                               <Button
                                 onClick={async () => {
                                   if (!composerText.trim()) return;
@@ -220,6 +232,7 @@ export default function ActivityFeedPage() {
                                   } finally {
                                     setPosting(false);
                                     setComposerText("");
+                                    setShowComposer(false);
                                   }
                                 }}
                                 disabled={posting}
@@ -231,6 +244,8 @@ export default function ActivityFeedPage() {
                         </div>
                       </div>
                     </div>
+                  )}
+                </div>
                 {loading ? (
                   <div className="text-center py-12 text-muted-foreground">
                     Loading activity...
