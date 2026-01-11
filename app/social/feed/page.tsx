@@ -284,9 +284,18 @@ export default function ActivityFeedPage() {
                                         toast.success("Posted", {
                                           action: {
                                             label: "Undo",
-                                            onClick: () => {
-                                              // optimistic local undo (no delete API)
-                                              setActivities((prev) => prev.filter((a) => a.id !== data.activity.id));
+                                            onClick: async () => {
+                                              try {
+                                                const res = await fetch(`/api/social/feed/${data.activity.id}`, {
+                                                  method: "DELETE",
+                                                });
+                                                if (!res.ok) throw new Error("delete-failed");
+                                                setActivities((prev) => prev.filter((a) => a.id !== data.activity.id));
+                                                toast.success("Post removed");
+                                              } catch (err) {
+                                                console.error("Failed to delete activity:", err);
+                                                toast.error("Unable to remove post");
+                                              }
                                             },
                                           },
                                         });
