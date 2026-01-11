@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +37,7 @@ export default function ActivityFeedPage() {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [lastFailedPosts, setLastFailedPosts] = useState<Record<string, any>>({});
+  const deleteTimersRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     fetchActivityFeed(feedType);
@@ -76,6 +77,50 @@ export default function ActivityFeedPage() {
       setLoading(false);
     }
   };
+
+  const scheduleDelete = (id: string) => {
+    if (deleteTimersRef.current[id]) return; // already scheduled
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/social/feed/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          toast.error("Unable to remove post");
+          return;
+        }
+        setActivities((prev) => prev.filter((a) => a.id !== id));
+        toast.success("Post removed");
+      } catch (err) {
+        console.error("Failed to delete activity:", err);
+        toast.error("Unable to remove post");
+      } finally {
+        delete deleteTimersRef.current[id];
+      }
+    }, 8000);
+
+    deleteTimersRef.current[id] = timer as unknown as number;
+
+    toast("Post will be removed", {
+      action: {
+        label: "Undo",
+        onClick: () => cancelScheduledDelete(id),
+      },
+    });
+  };
+
+  const cancelScheduledDelete = (id: string) => {
+    const timer = deleteTimersRef.current[id];
+    if (!timer) return;
+    clearTimeout(timer as unknown as number);
+    delete deleteTimersRef.current[id];
+    toast.success("Removal cancelled");
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(deleteTimersRef.current).forEach((t) => clearTimeout(t as unknown as number));
+    };
+  }, []);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -284,19 +329,7 @@ export default function ActivityFeedPage() {
                                         toast.success("Posted", {
                                           action: {
                                             label: "Undo",
-                                            onClick: async () => {
-                                              try {
-                                                const res = await fetch(`/api/social/feed/${data.activity.id}`, {
-                                                  method: "DELETE",
-                                                });
-                                                if (!res.ok) throw new Error("delete-failed");
-                                                setActivities((prev) => prev.filter((a) => a.id !== data.activity.id));
-                                                toast.success("Post removed");
-                                              } catch (err) {
-                                                console.error("Failed to delete activity:", err);
-                                                toast.error("Unable to remove post");
-                                              }
-                                            },
+                                            onClick: () => scheduleDelete(data.activity.id),
                                           },
                                         });
                                         // clear stored failed if any
