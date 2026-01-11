@@ -139,14 +139,46 @@ export default function FriendsPage() {
 
   async function respond(id: string, action: string) {
     setLoading(true);
+    // snapshot current state for rollback
+    const prevIncoming = incoming;
+    const prevFriends = friends;
     try {
-      await fetch(`/api/social/friends/${id}`, {
+      // optimistic update
+      if (action === "accept") {
+        const req = incoming.find((r: any) => r.id === id);
+        if (req) {
+          setIncoming((prev) => prev.filter((r: any) => r.id !== id));
+          const newFriend: UserSummary = {
+            id: req.user.id,
+            name: req.user.name,
+            image: req.user.image,
+            email: req.user.email,
+          };
+          setFriends((prev) => [newFriend, ...prev]);
+        }
+      } else if (action === "decline") {
+        setIncoming((prev) => prev.filter((r: any) => r.id !== id));
+      }
+
+      const res = await fetch(`/api/social/friends/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      await loadAll();
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(action === "accept" ? "Friend request accepted" : "Friend request declined");
+      } else {
+        // rollback
+        setIncoming(prevIncoming);
+        setFriends(prevFriends);
+        toast.error(data?.error || "Failed to update request");
+      }
     } catch (err) {
+      // rollback
+      setIncoming(prevIncoming);
+      setFriends(prevFriends);
+      toast.error("Network error while updating request");
       console.error(err);
     } finally {
       setLoading(false);
