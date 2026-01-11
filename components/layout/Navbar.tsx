@@ -24,10 +24,10 @@ export default function Navbar({ userName, userImage }: { userName?: string; use
             <Link href="/programs">
               <Button variant="ghost" size="sm">Programs</Button>
             </Link>
-            <Link href="/workouts">
+            <Link href="/workouts/history">
               <Button variant="ghost" size="sm">Workouts</Button>
             </Link>
-            <Link href="/progress">
+            <Link href="/progress/goals">
               <Button variant="ghost" size="sm">Progress</Button>
             </Link>
           </div>
