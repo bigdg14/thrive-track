@@ -48,7 +48,7 @@ export default async function RootLayout({
         >
           <SessionProvider>
             {signedIn && (
-              <Navbar userName={session?.user?.name} userImage={session?.user?.image} />
+              <Navbar userName={session?.user?.name ?? undefined} userImage={session?.user?.image ?? undefined} />
             )}
             {children}
             <Toaster />
