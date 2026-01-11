@@ -28,6 +28,9 @@ export default function ActivityFeedPage() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedType, setFeedType] = useState("friends");
+  const [composerText, setComposerText] = useState("");
+  const [composerVisibility, setComposerVisibility] = useState<"friends" | "public">("friends");
+  const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     fetchActivityFeed(feedType);
@@ -142,6 +145,92 @@ export default function ActivityFeedPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                    {/* Composer */}
+                    <div className="mb-4">
+                      <div className="flex gap-3">
+                        <Avatar className="w-10 h-10 mt-1">
+                          <AvatarImage src={undefined} />
+                          <AvatarFallback>U</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <textarea
+                            className="w-full resize-none p-3 rounded-md bg-background border border-border"
+                            rows={3}
+                            placeholder="Share something with your friends..."
+                            value={composerText}
+                            onChange={(e) => setComposerText(e.target.value)}
+                          />
+
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={composerVisibility}
+                                onChange={(e) => setComposerVisibility(e.target.value as any)}
+                                className="bg-transparent border border-border rounded px-2 py-1"
+                              >
+                                <option value="friends">Friends</option>
+                                <option value="public">Public</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <Button
+                                onClick={async () => {
+                                  if (!composerText.trim()) return;
+                                  setPosting(true);
+
+                                  // optimistic entry
+                                  const tempId = `temp-${Date.now()}`;
+                                  const tempEntry: ActivityItem = {
+                                    id: tempId,
+                                    userId: "me",
+                                    activityType: "user_post",
+                                    description: composerText,
+                                    metadata: {},
+                                    createdAt: new Date().toISOString(),
+                                    user: { id: "me", name: "You", image: undefined },
+                                  };
+
+                                  setActivities((prev) => [tempEntry, ...prev]);
+                                  const payload = {
+                                    activityType: "user_post",
+                                    description: composerText,
+                                    metadata: {},
+                                    visibility: composerVisibility,
+                                  };
+
+                                  try {
+                                    const res = await fetch(`/api/social/feed`, {
+                                      method: "POST",
+                                      headers: { "Content-Type": "application/json" },
+                                      body: JSON.stringify(payload),
+                                    });
+                                    const data = await res.json();
+                                    if (data.activity) {
+                                      // replace temp with real entry
+                                      setActivities((prev) => [data.activity, ...prev.filter((a) => a.id !== tempId)]);
+                                    } else {
+                                      // failed - remove temp
+                                      setActivities((prev) => prev.filter((a) => a.id !== tempId));
+                                      console.error(data);
+                                    }
+                                  } catch (err) {
+                                    console.error("Failed to post activity", err);
+                                    setActivities((prev) => prev.filter((a) => a.id !== tempId));
+                                  } finally {
+                                    setPosting(false);
+                                    setComposerText("");
+                                  }
+                                }}
+                                disabled={posting}
+                              >
+                                {posting ? "Posting..." : "Post"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                 {loading ? (
                   <div className="text-center py-12 text-muted-foreground">
                     Loading activity...
