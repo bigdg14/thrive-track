@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 
-type UserSummary = { id: string; name?: string | null; image?: string | null; email?: string };
+type UserSummary = { id: string; name?: string | null; image?: string | null; email?: string; friendshipId?: string };
 
 export default function FriendsPage() {
   const [incoming, setIncoming] = useState<Array<any>>([]);
@@ -185,6 +185,31 @@ export default function FriendsPage() {
     }
   }
 
+  async function removeFriend(friendshipId: string, display?: string) {
+    if (!friendshipId) return;
+    setLoading(true);
+    const prevFriends = friends;
+    // optimistic removal
+    setFriends((prev) => prev.filter((f) => f.friendshipId !== friendshipId && f.id !== friendshipId));
+    try {
+      const res = await fetch(`/api/social/friends/${friendshipId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success(`Removed ${display || "friend"}`);
+      } else {
+        // rollback
+        setFriends(prevFriends);
+        toast.error(data?.error || "Failed to remove friend");
+      }
+    } catch (err) {
+      setFriends(prevFriends);
+      toast.error("Network error while removing friend");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">Friends</h1>
@@ -316,6 +341,11 @@ export default function FriendsPage() {
                 <div>
                   <div className="font-medium">{f.name}</div>
                 </div>
+              </div>
+              <div>
+                <Button variant="destructive" onClick={() => removeFriend(f.friendshipId ?? f.id, f.name ?? undefined)} disabled={loading}>
+                  Remove
+                </Button>
               </div>
             </Card>
           ))}
