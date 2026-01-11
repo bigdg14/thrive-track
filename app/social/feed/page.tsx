@@ -32,10 +32,33 @@ export default function ActivityFeedPage() {
   const [composerVisibility, setComposerVisibility] = useState<"friends" | "public">("friends");
   const [posting, setPosting] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
+  const [me, setMe] = useState<{ name?: string | null; image?: string | null } | null>(null);
 
   useEffect(() => {
     fetchActivityFeed(feedType);
   }, [feedType]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`/api/user/profile`);
+        const data = await res.json();
+        setMe(data.user || null);
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+      }
+    })();
+  }, []);
+
+  const initials = (name?: string | null) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
 
   const fetchActivityFeed = async (type: string) => {
     setLoading(true);
@@ -158,8 +181,7 @@ export default function ActivityFeedPage() {
                     <div className="mb-4">
                       <div className="flex gap-3">
                         <Avatar className="w-10 h-10 mt-1">
-                          <AvatarImage src={undefined} />
-                          <AvatarFallback>U</AvatarFallback>
+                          {me?.image ? <AvatarImage src={me.image} /> : <AvatarFallback>{initials(me?.name)}</AvatarFallback>}
                         </Avatar>
                         <div className="flex-1">
                           <textarea
@@ -193,14 +215,14 @@ export default function ActivityFeedPage() {
 
                                   // optimistic entry
                                   const tempId = `temp-${Date.now()}`;
-                                  const tempEntry: ActivityItem = {
+                                    const tempEntry: ActivityItem = {
                                     id: tempId,
                                     userId: "me",
                                     activityType: "user_post",
                                     description: composerText,
                                     metadata: {},
                                     createdAt: new Date().toISOString(),
-                                    user: { id: "me", name: "You", image: undefined },
+                                    user: { id: "me", name: me?.name ?? "You", image: me?.image ?? undefined },
                                   };
 
                                   setActivities((prev) => [tempEntry, ...prev]);
